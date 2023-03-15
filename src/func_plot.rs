@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, vec};
 
-use eframe::{egui::{self, plot::{self, Text}, Grid, Window, TextEdit, TextBuffer}, epaint::Pos2};
+use eframe::{egui::{self, plot::{self, Text}, Grid, Window, TextEdit, TextBuffer, Layout, Button}, epaint::Pos2};
 
 use egui::plot::{Line, Plot, PlotPoints};
 use indoc::indoc;
@@ -60,12 +60,23 @@ impl GraphApp {
     }
     pub fn approximate(&mut self)->Result<(), AppError>{
         self.sort();
+        self.out.clear();
         self.funcs.clear();
         match (self.points.first(), self.points.last()){
             (Some(s), Some(e)) => self.range = (s[0],e[0]),
             _=>()
         }
-        self.funcs.push(("linear" , approximation::linear_approximation(&self.points)?));
+        {
+            let (func, str_func, errors, mid_err, k) = approximation::linear_approximation(&self.points)?;
+            self.funcs.push(("linear" , func));
+            let sum :f64= round(errors.iter().sum(),3);
+            self.out += &format!("Linear approximation returned function: {str_func}, S = {sum}, sigma = {mid_err}");
+            if let Some(n) = k{
+                self.out += &format!(", Pirson = {n}");
+            }
+            self.out += "\n";
+        }
+        
         return  Ok(());
     }
     
@@ -108,7 +119,7 @@ impl eframe::App for GraphApp {
                         Ok(_)=>()
                     }
                 }
-                
+                /*
                 ui.vertical(|ui|{
                     
                     let mut selected =Enum::First;
@@ -120,12 +131,12 @@ impl eframe::App for GraphApp {
                             ui.selectable_value(&mut selected, Enum::Third, "Third");
                         }
                     );
-                });
+                });*/
                 ui.end_row();
                 egui::scroll_area::ScrollArea::new([false,true]).max_height(500.).show(ui, |ui|{
                     ui.vertical(|ui|{
-                    
-                        ui.label("таблица аппроксимации");
+                        ui.add_space(20.);
+                        ui.label("table of points");
                         let mut i:usize = 0;
                         while i<self.points.len() {
                             ui.horizontal(|ui| {
@@ -154,7 +165,7 @@ impl eframe::App for GraphApp {
                 
             });
 
-            self.out = indoc!{"
+            /*self.out = indoc!{"
                 Вы любите розы?
                 а я на них срал!
                 стране нужны паровозы,
@@ -172,9 +183,9 @@ impl eframe::App for GraphApp {
                 на
                 х*й.
             
-            "}.to_string();
-            egui::Window::new("Output").resizable(true).show(ctx, |ui| {
-                ui.add(egui::TextEdit::multiline(&mut self.out).interactive(false));
+            "}.to_string();*/
+            egui::Window::new("Output").resizable(true).vscroll(true).show(ctx, |ui| {
+                ui.add(egui::TextEdit::multiline(&mut self.out).interactive(false).desired_width(400.));
             });
            
             
@@ -185,11 +196,19 @@ impl eframe::App for GraphApp {
             egui::Window::new("Options").resizable(true).default_pos(Pos2{ x: 0., y: 0.}).show(ctx, |ui| {
                 let mut modal = Modal::new(ctx, "ERROR!");
                 modal.show_dialog();
-                if ui.button("Open the modal").clicked() {
-                    // Show the modal
-                    
-                    
-                }
+                /*ui.allocate_ui_with_layout(eframe::epaint::Vec2{ x:  200., y:  200.}, Layout::top_down(eframe::emath::Align::LEFT), |ui|{
+                    if ui.button("Open the modal").clicked() {
+                        // Show the modal
+                        
+                        
+                    }
+                    ui.add_sized([100.,100.], Button::)
+                });*/
+
+                /*if ui.add(Button::new("afasfj").min_size(eframe::epaint::Vec2 { x: 50., y: 100. })).clicked(){
+
+                }*/
+                
                 if ui.button("open file").clicked(){
                     let open_file: String;
                     match tinyfiledialogs::open_file_dialog("Open", "points.txt", None) {

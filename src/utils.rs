@@ -9,6 +9,9 @@ impl  Function {
         Self(Box::new(f))
         
     }
+    pub fn call(&mut self, x:f64)->f64{
+        (self.0)(x)
+    }
 }
 
 pub fn read_points_from_file(filename: &str) -> Result<Vec<[f64; 2]>, AppError> {
@@ -31,6 +34,12 @@ pub fn read_points_from_file(filename: &str) -> Result<Vec<[f64; 2]>, AppError> 
         let y_fromstr = y.parse::<f64>().map_err(|_| AppError::InvalidFormat)?;
         points.push([x_fromstr, y_fromstr]);
     }
+    
 
     Ok(points)
+}
+
+pub fn round(x: f64, n:u32)->f64{
+    let k = (10 as u32).pow(n) as f64;
+    (x*k).round()/k
 }

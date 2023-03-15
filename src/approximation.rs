@@ -1,6 +1,6 @@
-use crate::{utils::{Function, self}, gauss::{self, solve}, errors::AppError};
+use crate::{utils::{Function, self, round}, gauss::{self, solve}, errors::AppError};
 
-pub fn linear_approximation(points: &Vec<[f64;2]>)->Result<Function,AppError>{
+pub fn linear_approximation(points: &Vec<[f64;2]>)->Result<(Function, String, Vec<f64>, f64, Option<f64>),AppError>{
     let n = points.len();
 
     let mut summ_x:f64 = 0.;
@@ -43,6 +43,14 @@ pub fn linear_approximation(points: &Vec<[f64;2]>)->Result<Function,AppError>{
     for p in points{
         summ_3 += (p[1] - mid_y).powf(2.);
     }
+
+    let mut r =  Some(summ_1/ ((summ_2*summ_3).sqrt()));
+    if let None = r{
+        r = None
+    }
+
+
+    
     /*try:
         r = (summ_1)/(math.sqrt(summ_2*summ_3))
         print(f"Коэффициент корреляции Пирсона равен: {round(r, 3)}")
@@ -59,10 +67,18 @@ pub fn linear_approximation(points: &Vec<[f64;2]>)->Result<Function,AppError>{
     mid_sqd_err = math.sqrt(sum(errors)/n)
 
     return result_func, str_result_func, errors, mid_sqd_err*/
+
+    
     let ans:  Vec<f64> = solve(&mut vec![vec![summ_x_sqd,summ_x], vec![summ_x,n as f64]], &mut vec![summ_x_y,summ_y]).map_err(|_e| AppError::UnableApproximate)?;
-    let res_func = Function::new(move |x| ans[0]*x + ans[1]);
+    let x = round(ans[0], 3);
+    let y = round(ans[1], 3);
+    let str_func = format!("{x} x + {y}");
+    let mut res_func = Function::new(move |x| ans[0]*x + ans[1]);
+    let errors:Vec<f64> = (0..n).map(|i|{
+        (points[i][1]-res_func.call(points[i][0])).powf(2.)
+    }).collect();
+    let sum:f64 = errors.iter().sum();
+    let mid_err = (sum.abs() /n as f64).sqrt();
 
-
-
-    return  Ok(res_func);
+    return  Ok((res_func,str_func, errors, mid_err, r));
 }
