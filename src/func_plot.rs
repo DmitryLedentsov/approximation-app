@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, vec};
+use std::{cmp::Ordering, vec, iter::Map};
 
 use eframe::{egui::{self, plot::{self, Text}, Grid, Window, TextEdit, TextBuffer, Layout, Button}, epaint::Pos2};
 
@@ -66,16 +66,32 @@ impl GraphApp {
             (Some(s), Some(e)) => self.range = (s[0],e[0]),
             _=>()
         }
+        let mut map = std::collections::HashMap::<String, f64>::new();
         {
+            let method = "linear";
             let (func, str_func, errors, mid_err, k) = approximation::linear_approximation(&self.points)?;
-            self.funcs.push(("linear" , func));
+            self.funcs.push((method , func));
             let sum :f64= round(errors.iter().sum(),3);
-            self.out += &format!("Linear approximation returned function: {str_func}, S = {sum}, sigma = {mid_err}");
+            self.out += &format!("{method} approximation returned function: {str_func}, S = {sum}, sigma = {mid_err}");
             if let Some(n) = k{
                 self.out += &format!(", Pirson = {n}");
             }
             self.out += "\n";
+            map.insert(method.to_string(), mid_err);
         }
+        {
+            let method = "square";
+            let (func, str_func, errors, mid_err) = approximation::squad_approximate(&self.points)?;
+            self.funcs.push((method , func));
+            let sum :f64= round(errors.iter().sum(),3);
+            self.out += &format!("{method} approximation returned function: {str_func}, S = {sum}, sigma = {mid_err}");
+            self.out += "\n";
+            map.insert(method.to_string(), mid_err);
+        }
+        if let Some((name,err)) = map.iter().max_by(|a,b| a.partial_cmp(b).unwrap_or(Ordering::Equal)){
+            self.out += &format!("minimal squad error: {err}, best approximation: {name} \n");
+        }
+        
         
         return  Ok(());
     }

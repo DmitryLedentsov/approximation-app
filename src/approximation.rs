@@ -82,3 +82,65 @@ pub fn linear_approximation(points: &Vec<[f64;2]>)->Result<(Function, String, Ve
 
     return  Ok((res_func,str_func, errors, mid_err, r));
 }
+
+pub fn squad_approximate(points: &Vec<[f64;2]>)->Result<(Function, String, Vec<f64>, f64),AppError>{
+    let n = points.len();
+    let mut summ_x = 0.;
+    for p in points{
+        summ_x += p[0];
+    }
+
+    let mut summ_x_sqd = 0.;
+    for p in points{
+        summ_x_sqd += p[0].powf(2.);
+    }
+
+
+    let mut summ_x_qub = 0.;
+    for p in points{
+        summ_x_qub += p[0].powf(3.);
+    }
+
+    let mut summ_x_forth = 0.;
+    for p in points{
+        summ_x_forth += p[0].powf(4.);
+    }
+
+    let mut summ_y = 0.;
+    for p in points{
+        summ_y += p[1];
+    }
+
+    let mut summ_x_y = 0.;
+    for p in points{
+        summ_x_y += p[0]*p[1];
+    }
+
+    let mut summ_x_sqd_y = 0.;
+    for p in points{
+        summ_x_sqd_y += p[0].powf(2.)*p[1];
+    }
+
+    let ans:  Vec<f64>  = solve(&mut vec![
+        vec![n as f64,summ_x,summ_x_sqd], 
+        vec![summ_x, summ_x_sqd, summ_x_qub],
+        vec![summ_x_sqd, summ_x_qub, summ_x_forth] ],
+        &mut vec![summ_y,summ_x_y, summ_x_sqd_y]).map_err(|_e| AppError::UnableApproximate)?;
+
+    
+    let x_2 = round(ans[2], 3);
+    let x = round(ans[1], 3);
+    let a = round(ans[0], 3);
+    let mut result_func = Function::new(move |x|  ans[2]*(x*x) + ans[1]*x + ans[0]);
+
+    
+    let str_func = format!("{x_2}x^2 + {x}x + {a}");
+    
+    let errors:Vec<f64> = (0..n).map(|i|{
+        (points[i][1]-result_func.call(points[i][0])).powf(2.)
+    }).collect();
+    let sum:f64 = errors.iter().sum();
+    let mid_err = (sum.abs() /n as f64).sqrt();
+    //СКО
+    Ok((result_func, str_func, errors, mid_err))
+}
