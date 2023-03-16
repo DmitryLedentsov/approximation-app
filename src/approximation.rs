@@ -85,6 +85,7 @@ pub fn linear_approximation(points: &Vec<[f64;2]>)->Result<(Function, String, Ve
     return  Ok((res_func,str_func, errors, mid_err, r));
 }
 
+pub type standart_approximator = fn(&Vec<[f64;2]>)->Result<(Function, String, Vec<f64>, f64),AppError>;
 pub fn squad_approximate(points: &Vec<[f64;2]>)->Result<(Function, String, Vec<f64>, f64),AppError>{
     let n = points.len();
     let mut summ_x = 0.;

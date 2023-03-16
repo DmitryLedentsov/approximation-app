@@ -7,7 +7,7 @@ use indoc::indoc;
 use egui_modal::{Modal, Icon};
 use tinyfiledialogs::*;
 use itertools::Itertools;
-use crate::{utils, errors::AppError, approximation};
+use crate::{utils, errors::AppError, approximation::{self, standart_approximator, squad_approximate, cub_approximate}};
 const RANGE:f64 = 10.;
 const STEP:f64 = 0.01;
 
@@ -86,11 +86,12 @@ impl GraphApp {
             self.out += "\n\n";
             map.insert(method.to_string(), mid_err);
         }
-        {
-            let method = "square";
-            let res = approximation::squad_approximate(&self.points);
+        
+        let mut add_method  =  |method:&'static str, approximate: standart_approximator| -> Result<_, AppError>{
+            
+            let res = approximate(&self.points);
             if res.is_err(){
-                self.out+=&format!("unable approximate with {method} method");
+                self.out+=&format!("unable approximate with {method} method \n\n");
             }else{
                 let (func, str_func, errors, mid_err) = res?;
                 self.funcs.push((method , func));
@@ -99,21 +100,10 @@ impl GraphApp {
                 self.out += "\n\n";
                 map.insert(method.to_string(), mid_err);
             }
-            
-        }
-
-        {
-            let method = "cubic";
-            let (func, str_func, errors, mid_err) = approximation::cub_approximate(&self.points)?;
-            self.funcs.push((method , func));
-            let sum :f64= round(errors.iter().sum(),3);
-            self.out += &format!("{method} approximation returned function: {str_func}, S = {sum}, sigma = {mid_err}");
-            self.out += "\n\n";
-            map.insert(method.to_string(), mid_err);
-        }
-        if let Some((name,err)) = map.iter().max_by(|a,b| a.partial_cmp(b).unwrap_or(Ordering::Equal)){
-            self.out += &format!("minimal squad error: {err}, best approximation: {name} \n");
-        }
+            Ok(())
+        };
+        add_method("square", squad_approximate);
+        add_method("cubic", cub_approximate);
         
         
         return  Ok(());
@@ -193,7 +183,10 @@ impl eframe::App for GraphApp {
                             
                         }
                         if ui.button("add").clicked(){
-                            let adding_point = [0.,0.];
+                            let mut adding_point:[f64;2] =*self.points.last().unwrap_or(&[0.0,0.0]);
+
+                            adding_point[0] +=1.;
+                            adding_point[1] += 1.;
                             if !self.points.contains(&adding_point){
                                 self.points.push(adding_point);
                             }
