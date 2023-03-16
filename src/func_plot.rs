@@ -6,7 +6,7 @@ use egui::plot::{Line, Plot, PlotPoints};
 use indoc::indoc;
 use egui_modal::{Modal, Icon};
 use tinyfiledialogs::*;
-
+use itertools::Itertools;
 use crate::{utils, errors::AppError, approximation};
 const RANGE:f64 = 10.;
 const STEP:f64 = 0.01;
@@ -59,13 +59,20 @@ impl GraphApp {
         });
     }
     pub fn approximate(&mut self)->Result<(), AppError>{
+        self.points.dedup_by(|a,b| a[0].partial_cmp(&b[0]).unwrap_or(Ordering::Greater).is_eq());
         self.sort();
+
         self.out.clear();
         self.funcs.clear();
         match (self.points.first(), self.points.last()){
             (Some(s), Some(e)) => self.range = (s[0],e[0]),
             _=>()
         }
+
+        if self.points.len()<2 {
+            return  Err(AppError::OnePoint);
+        }
+       
         let mut map = std::collections::HashMap::<String, f64>::new();
         {
             let method = "linear";
@@ -76,16 +83,32 @@ impl GraphApp {
             if let Some(n) = k{
                 self.out += &format!(", Pirson = {n}");
             }
-            self.out += "\n";
+            self.out += "\n\n";
             map.insert(method.to_string(), mid_err);
         }
         {
             let method = "square";
-            let (func, str_func, errors, mid_err) = approximation::squad_approximate(&self.points)?;
+            let res = approximation::squad_approximate(&self.points);
+            if res.is_err(){
+                self.out+=&format!("unable approximate with {method} method");
+            }else{
+                let (func, str_func, errors, mid_err) = res?;
+                self.funcs.push((method , func));
+                let sum :f64= round(errors.iter().sum(),3);
+                self.out += &format!("{method} approximation returned function: {str_func}, S = {sum}, sigma = {mid_err}");
+                self.out += "\n\n";
+                map.insert(method.to_string(), mid_err);
+            }
+            
+        }
+
+        {
+            let method = "cubic";
+            let (func, str_func, errors, mid_err) = approximation::cub_approximate(&self.points)?;
             self.funcs.push((method , func));
             let sum :f64= round(errors.iter().sum(),3);
             self.out += &format!("{method} approximation returned function: {str_func}, S = {sum}, sigma = {mid_err}");
-            self.out += "\n";
+            self.out += "\n\n";
             map.insert(method.to_string(), mid_err);
         }
         if let Some((name,err)) = map.iter().max_by(|a,b| a.partial_cmp(b).unwrap_or(Ordering::Equal)){
@@ -131,8 +154,9 @@ impl eframe::App for GraphApp {
                 modal.show_dialog();
                 if(ui.button("approximate")).clicked(){
                     match self.approximate(){
-                        Err(_)=>open_dialog_with_error(modal, "aaaa!"),
-                        Ok(_)=>()
+                        Err(AppError::OnePoint) =>open_dialog_with_error(modal, "need at least 2 points!"),
+                        Err(_)=>open_dialog_with_error(modal, "something went wrong!"),
+                        _=>()
                     }
                 }
                 /*
@@ -274,7 +298,7 @@ pub fn run <T:eframe::App + 'static> (app: T){
    
 
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::vec2(500.0, 500.0)),
+        initial_window_size: Some(egui::vec2(800.0, 600.0)),
         ..Default::default()
     };
 

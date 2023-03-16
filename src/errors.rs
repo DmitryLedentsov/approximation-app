@@ -4,4 +4,5 @@ pub enum AppError{
 
     InvalidFormat,
     UnableApproximate,
+    OnePoint
 }
