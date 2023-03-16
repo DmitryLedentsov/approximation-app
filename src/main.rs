@@ -13,13 +13,12 @@ fn main(){
 
     let mut matrix = vec![
         vec![1.0, 1.0],
-        vec![1.0,2.0]
+        vec![1.0, 2.0]
     ];
     let solution = gauss::solve(&mut matrix, &mut vec![5.,2.]).unwrap();
     for x in solution{
         println!("{x} ");
     }
-
 
 
     let mut binding = |x : f64| x.powi(2);
