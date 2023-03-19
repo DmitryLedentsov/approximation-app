@@ -1,3 +1,4 @@
+#![windows_subsystem = "windows"]
 use func_plot::{ run, GraphApp};
 use utils::Function;
 mod func_plot;
@@ -6,6 +7,7 @@ mod utils;
 mod approximation;
 mod gauss;
 use gauss::solve;
+
 fn main(){
     // Log to stdout (if you run with `RUST_LOG=debug`).
 
@@ -25,13 +27,9 @@ fn main(){
     let f =  Function::new( binding);
     
     let mut app = GraphApp::new();
-    app.get_functions().push(("x^2",f));
-   // app.get_functions().push(|x| 1./x);
-    //app.get_points().push([3.,3.]);
-    //app.get_points().push([4.,4.]);
     
     for i in 0..20{
-        app.get_points().push([i as f64,(i as f64).powf(2.)]);
+        app.get_points().push([i as f64,(i as f64).powf(2.)/10.]);
     }
     app.range = (-50.,50.);
     app.step = 0.01;

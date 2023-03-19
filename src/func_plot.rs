@@ -266,7 +266,7 @@ impl eframe::App for GraphApp {
             });
             
 
-            Plot::new("my_plot").legend(plot::Legend { text_style: egui::TextStyle::Monospace, background_alpha: 1., position: plot::Corner::LeftBottom }).data_aspect(0.1).show(ui, |plot_ui| {
+            Plot::new("my_plot").legend(plot::Legend { text_style: egui::TextStyle::Monospace, background_alpha: 1., position: plot::Corner::LeftBottom }).data_aspect(1.).show(ui, |plot_ui| {
                 //plot_ui.set_plot_bounds(PlotBounds::from_min_max([-1 0.,-10.], [10.+1.,10.0+1.]));
                 //plot_ui.line(Line::new(PlotPoints::new(vec![[1.,2.]])).width(5.));
 
