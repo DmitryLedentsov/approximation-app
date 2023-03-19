@@ -1,13 +1,13 @@
 use std::{cmp::Ordering, vec, iter::Map};
 
-use eframe::{egui::{self, plot::{self, Text}, Grid, Window, TextEdit, TextBuffer, Layout, Button}, epaint::Pos2};
+use eframe::{egui::{self, plot::{self, Text}, Grid, Window, TextEdit, TextBuffer, Layout, Button, WidgetText}, epaint::{Pos2, Color32}};
 
 use egui::plot::{Line, Plot, PlotPoints};
 use indoc::indoc;
 use egui_modal::{Modal, Icon};
 use tinyfiledialogs::*;
 use itertools::Itertools;
-use crate::{utils, errors::AppError, approximation::{self, standart_approximator, squad_approximate, cub_approximate}};
+use crate::{utils, errors::AppError, approximation::{self, standart_approximator, squad_approximate, cub_approximate, exp_approximate, ln_approximate}};
 const RANGE:f64 = 10.;
 const STEP:f64 = 0.01;
 
@@ -104,8 +104,11 @@ impl GraphApp {
         };
         add_method("square", squad_approximate);
         add_method("cubic", cub_approximate);
-        
-        
+        add_method("exponental", exp_approximate);
+        add_method("log", ln_approximate);
+        if let Some((name,err)) = map.iter().max_by(|a,b| b.1.partial_cmp(a.1).unwrap_or(Ordering::Greater)){
+            self.out += &format!("minimal squad error: {err}, best approximation: {name} \n");
+        }
         return  Ok(());
     }
     
@@ -142,7 +145,8 @@ impl eframe::App for GraphApp {
                 
                 let mut modal = Modal::new(ctx, "ERROR!");
                 modal.show_dialog();
-                if(ui.button("approximate")).clicked(){
+                if ui.add(Button::new(WidgetText::RichText("approximate".into()).heading().color(Color32::YELLOW)).fill(Color32::DARK_GREEN)).clicked(){
+                
                     match self.approximate(){
                         Err(AppError::OnePoint) =>open_dialog_with_error(modal, "need at least 2 points!"),
                         Err(_)=>open_dialog_with_error(modal, "something went wrong!"),
@@ -258,6 +262,7 @@ impl eframe::App for GraphApp {
                     }
 
                 }
+               
             });
             
 
