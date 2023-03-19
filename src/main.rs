@@ -10,7 +10,7 @@ fn main(){
     // Log to stdout (if you run with `RUST_LOG=debug`).
 
 
-
+    /*
     let mut matrix = vec![
         vec![1.0, 1.0],
         vec![1.0, 2.0]
@@ -18,7 +18,7 @@ fn main(){
     let solution = gauss::solve(&mut matrix, &mut vec![5.,2.]).unwrap();
     for x in solution{
         println!("{x} ");
-    }
+    }*/
 
 
     let mut binding = |x : f64| x.powi(2);
