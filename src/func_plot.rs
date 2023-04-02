@@ -7,7 +7,7 @@ use indoc::indoc;
 use egui_modal::{Modal, Icon};
 use tinyfiledialogs::*;
 use itertools::Itertools;
-use crate::{utils, errors::AppError, approximation::{self, standart_approximator, squad_approximate, cub_approximate, exp_approximate, ln_approximate}};
+use crate::{utils, errors::AppError, approximation::{self, StandartApproximator, squad_approximate, cub_approximate, exp_approximate, ln_approximate, pow_approximate}};
 const RANGE:f64 = 10.;
 const STEP:f64 = 0.01;
 
@@ -76,7 +76,7 @@ impl GraphApp {
         let mut map = std::collections::HashMap::<String, f64>::new();
         {
             let method = "linear";
-            let (func, str_func, errors, mid_err, k) = approximation::linear_approximation(&self.points)?;
+            let (_,_,func, str_func, errors, mid_err, k) = approximation::linear_approximation(&self.points)?;
             self.funcs.push((method , func));
             let sum :f64= round(errors.iter().sum(),3);
             self.out += &format!("{method} approximation returned function: {str_func}, S = {sum}, sigma = {mid_err}");
@@ -87,7 +87,7 @@ impl GraphApp {
             map.insert(method.to_string(), mid_err);
         }
         
-        let mut add_method  =  |method:&'static str, approximate: standart_approximator| -> Result<_, AppError>{
+        let mut add_method  =  |method:&'static str, approximate: StandartApproximator| -> Result<_, AppError>{
             
             let res = approximate(&self.points);
             if res.is_err(){
@@ -106,6 +106,7 @@ impl GraphApp {
         add_method("cubic", cub_approximate);
         add_method("exponental", exp_approximate);
         add_method("log", ln_approximate);
+        add_method("pow", pow_approximate);
         if let Some((name,err)) = map.iter().max_by(|a,b| b.1.partial_cmp(a.1).unwrap_or(Ordering::Greater)){
             self.out += &format!("minimal squad error: {err}, best approximation: {name} \n");
         }

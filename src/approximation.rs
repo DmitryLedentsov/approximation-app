@@ -1,6 +1,7 @@
 use crate::{utils::{Function, self, round}, gauss::{self, solve}, errors::AppError};
+use expression_format::ex_format;
 const E:f64 = std::f64::consts::E;
-pub fn linear_approximation(points: &Vec<[f64;2]>)->Result<(Function, String, Vec<f64>, f64, Option<f64>),AppError>{
+pub fn linear_approximation(points: &Vec<[f64;2]>)->Result<(f64,f64,Function, String, Vec<f64>, f64, Option<f64>),AppError>{
     let n = points.len();
 
     let mut summ_x:f64 = 0.;
@@ -82,10 +83,10 @@ pub fn linear_approximation(points: &Vec<[f64;2]>)->Result<(Function, String, Ve
     let sum:f64 = errors.iter().sum();
     let mid_err = (sum.abs() /n as f64).sqrt();
 
-    return  Ok((res_func,str_func, errors, mid_err, r));
+    return  Ok((x,y,res_func,str_func, errors, mid_err, r));
 }
 
-pub type standart_approximator = fn(&Vec<[f64;2]>)->Result<(Function, String, Vec<f64>, f64),AppError>;
+pub type StandartApproximator = fn(&Vec<[f64;2]>)->Result<(Function, String, Vec<f64>, f64),AppError>;
 pub fn squad_approximate(points: &Vec<[f64;2]>)->Result<(Function, String, Vec<f64>, f64),AppError>{
     let n = points.len();
     let mut summ_x = 0.;
@@ -360,6 +361,38 @@ pub fn ln_approximate(input: &Vec<[f64;2]>)->Result<(Function, String, Vec<f64>,
 
     
     let str_func = format!("{x} ln(x) + {a}");
+    
+    let errors:Vec<f64> = (0..n).map(|i|{
+        (points[i][1]-result_func.call(points[i][0])).powf(2.)
+    }).collect();
+    let sum:f64 = errors.iter().sum();
+    let mid_err = (sum.abs() /n as f64).sqrt();
+    //СКО
+    Ok((result_func, str_func, errors, mid_err))
+}
+
+pub fn pow_approximate(input: &Vec<[f64;2]>)->Result<(Function, String, Vec<f64>, f64),AppError>{
+    let  mut points = Vec::<[f64;2]>::new();
+    for p in input.iter(){
+        if p[0]>0. && p[1]>0.{
+            points.push(*p);
+        }
+    }
+    if points.len()!= input.len(){
+        return Err(AppError::UnableApproximate);
+    }
+    let n = points.len();
+    let  mut lin = Vec::<[f64;2]>::new();
+    for i in 0..n {
+        lin.push([points[i][0].log(E), points[i][1].log(E)]);
+    }
+    let (lina,linb,..) = linear_approximation(&points)?;
+    let a = linb.exp();
+    let b = lina;
+    let mut result_func = Function::new(move |x|  a*(x.powf(b)));
+
+
+    let str_func = ex_format!("{round(a,3)} * x ^ {round(b,3)}");
     
     let errors:Vec<f64> = (0..n).map(|i|{
         (points[i][1]-result_func.call(points[i][0])).powf(2.)
