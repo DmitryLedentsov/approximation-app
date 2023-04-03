@@ -73,17 +73,18 @@ pub fn linear_approximation(points: &Vec<[f64;2]>)->Result<(f64,f64,Function, St
 
     
     let ans:  Vec<f64> = solve(&mut vec![vec![summ_x_sqd,summ_x], vec![summ_x,n as f64]], &mut vec![summ_x_y,summ_y]).map_err(|_e| AppError::UnableApproximate)?;
+    let cp = ans.clone();
     let x = round(ans[0], 3);
     let y = round(ans[1], 3);
     let str_func = format!("{x} x + {y}");
-    let mut res_func = Function::new(move |x| ans[0]*x + ans[1]);
+    let mut res_func = Function::new(move |x_| ans[0]*x_ + ans[1]);
     let errors:Vec<f64> = (0..n).map(|i|{
         (points[i][1]-res_func.call(points[i][0])).powf(2.)
     }).collect();
     let sum:f64 = errors.iter().sum();
     let mid_err = (sum.abs() /n as f64).sqrt();
 
-    return  Ok((x,y,res_func,str_func, errors, mid_err, r));
+    return  Ok((cp[0],cp[1],res_func,str_func, errors, mid_err, r));
 }
 
 pub type StandartApproximator = fn(&Vec<[f64;2]>)->Result<(Function, String, Vec<f64>, f64),AppError>;
@@ -386,7 +387,7 @@ pub fn pow_approximate(input: &Vec<[f64;2]>)->Result<(Function, String, Vec<f64>
     for i in 0..n {
         lin.push([points[i][0].log(E), points[i][1].log(E)]);
     }
-    let (lina,linb,..) = linear_approximation(&points)?;
+    let (lina,linb, ..) = linear_approximation(&points)?;
     let a = linb.exp();
     let b = lina;
     let mut result_func = Function::new(move |x|  a*(x.powf(b)));

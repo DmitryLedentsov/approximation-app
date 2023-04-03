@@ -106,7 +106,7 @@ impl GraphApp {
         add_method("cubic", cub_approximate);
         add_method("exponental", exp_approximate);
         add_method("log", ln_approximate);
-        add_method("pow", pow_approximate);
+        //add_method("pow", pow_approximate);
         if let Some((name,err)) = map.iter().max_by(|a,b| b.1.partial_cmp(a.1).unwrap_or(Ordering::Greater)){
             self.out += &format!("minimal squad error: {err}, best approximation: {name} \n");
         }
